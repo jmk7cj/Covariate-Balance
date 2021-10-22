@@ -9,7 +9,7 @@
 #          matching and weighting methods for achieving covariate balance in observational 
 #          studies. 
 #
-# NOTE: This file is actively under construction) 
+# NOTE: This file is actively under construction
 #----------------------------------------------------------------------------------------------#
 
 
