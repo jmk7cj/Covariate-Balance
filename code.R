@@ -14,7 +14,7 @@
 
 
 # ----------------------------------------------------------------------------------------------------------------- #  
-# Load packages
+# Load packages, set working directory
 # ----------------------------------------------------------------------------------------------------------------- #  
 rm(list = ls())
 gc()
@@ -28,6 +28,8 @@ library("data.table")
 library("ggplot2")
 library("doParallel")
 library("doSNOW")
+
+setwd("/Users/my folder")
 # ----------------------------------------------------------------------------------------------------------------- #  
 
 
@@ -200,8 +202,6 @@ names(results.df) <- c("prop_treat", "pop_ATE", "pop_ATT", "avg_unbal_smd",
                        "att_est_mwr1", "att_est_mwr3", 
                        "att_est_mwr5", "att_est_weight")
 head(results.df)
-
-setwd("/Users/my folder")
 write.csv(results.df, "results_list_10_25_2021.csv", row.names = F)
 # ----------------------------------------------------------------------------------------------------------------- #  
 
