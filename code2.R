@@ -3,7 +3,7 @@
 # 
 # Title: Covariate Balance for Observational Scale-ups: A Comparison of Matching and Weighting
 #
-# Date: 10/25/2021 (under construction)
+# Date: 11/1/2021 (under construction)
 #
 # Purpose: Master .R file to conduct Monte Carlo simulations comparing propensity score 
 #          matching and weighting methods for achieving covariate balance in observational 
@@ -62,7 +62,8 @@ design_matrix <- data.frame(expand.grid(iteration = 1:iterations,
                                         psmw_method = psmw_method))
 
 design_matrix <- design_matrix[!(design_matrix$knn > 1 & design_matrix$psmw_method == "weighting"), ]
-design_matrix$knn <- ifelse(design_matrix$psmw_method == "weighting", NA, design_matrix$knn)
+#design_matrix$knn <- ifelse(design_matrix$psmw_method == "weighting", NA, design_matrix$knn)
+design_matrix$knn <- ifelse(design_matrix$psmw_method == "weighting", -99, design_matrix$knn)
 design_matrix$i <- 1:nrow(design_matrix)
 
 # prepare machine for parallel processing
@@ -139,26 +140,25 @@ estimate_ps <- function(d, r, psmw_method) {
   
   
   # average SMD across all covariates at baseline
-  avg_smd_baseline <- mean(abs(bal.tab(ps_model, stats = c("mean.diffs", "variance.ratios"), un=T)$Balance[2:(n_covs+1),"Diff.Un"]))
+  avg_smd_baseline <- mean(abs(bal.tab(ps_model, stats = c("mean.diffs", "variance.ratios"), un=T)$Balance[-c(1),"Diff.Un"]))
 
   # average variance ratio across all covariates at baseline
-  avg_varratio_baseline <- mean(abs(bal.tab(ps_model, stats = c("mean.diffs", "variance.ratios"), un=T)$Balance[2:(n_covs+1),"V.Ratio.Un"]))
+  avg_varratio_baseline <- mean(abs(bal.tab(ps_model, stats = c("mean.diffs", "variance.ratios"), un=T)$Balance[-c(1),"V.Ratio.Un"]))
 
   # average SMD across all covariates after PSM/W
-  avg_smd_ps <- mean(abs(bal.tab(ps_model, stats = c("mean.diffs", "variance.ratios"), un=T)$Balance[2:(n_covs+1),"Diff.Adj"]))
+  avg_smd_ps <- mean(abs(bal.tab(ps_model, stats = c("mean.diffs", "variance.ratios"), un=T)$Balance[-c(1),"Diff.Adj"]))
 
   # average variance ratio across all covariates after PSM/W
-  avg_varratio_ps <- mean(abs(bal.tab(ps_model, stats = c("mean.diffs", "variance.ratios"), un=T)$Balance[2:(n_covs+1),"V.Ratio.Adj"]))
+  avg_varratio_ps <- mean(abs(bal.tab(ps_model, stats = c("mean.diffs", "variance.ratios"), un=T)$Balance[-c(1),"V.Ratio.Adj"]))
 
   # average reduction in SMD across all covariates after PSM/W
-  avg_smd_reduction <- mean(abs(abs(bal.tab(ps_model, stats = c("mean.diffs", "variance.ratios"), un=T)$Balance[2:(n_covs+1),"Diff.Adj"]) - 
-                                  abs(bal.tab(ps_model, stats = c("mean.diffs", "variance.ratios"), un=T)$Balance[2:(n_covs+1),"Diff.Un"])) / 
-                              abs(bal.tab(ps_model, stats = c("mean.diffs", "variance.ratios"), un=T)$Balance[2:(n_covs+1),"Diff.Un"]))*100
-
+  avg_smd_reduction <- (mean((avg_smd_ps - avg_smd_baseline) / avg_smd_baseline))*-100
+  
   # average reduction in variance ratios across all covariates after PSM/W
-  avg_varratio_reduction <- mean(abs(((abs(log(bal.tab(ps_model, stats = c("mean.diffs", "variance.ratios"), un=T)$Balance[2:(n_covs+1),"V.Ratio.Adj"])) - 
-                                         abs(log(bal.tab(ps_model, stats = c("mean.diffs", "variance.ratios"), un=T)$Balance[2:(n_covs+1),"V.Ratio.Un"]))) / 
-                                        abs(log(bal.tab(ps_model, stats = c("mean.diffs", "variance.ratios"), un=T)$Balance[2:(n_covs+1),"V.Ratio.Un"])))*-100))
+  avg_varratio_reduction <- (mean((log(avg_varratio_ps) - log(avg_varratio_baseline)) / log(avg_varratio_baseline)))*-100
+  # avg_varratio_reduction <- (mean(abs(((abs(log(bal.tab(ps_model, stats = c("mean.diffs", "variance.ratios"), un=T)$Balance[-c(1),"V.Ratio.Adj"])) - 
+  #                                        abs(log(bal.tab(ps_model, stats = c("mean.diffs", "variance.ratios"), un=T)$Balance[-c(1),"V.Ratio.Un"]))) / 
+  #                                       abs(log(bal.tab(ps_model, stats = c("mean.diffs", "variance.ratios"), un=T)$Balance[-c(1),"V.Ratio.Un"]))))))*-100
   
   # Retain matched units only  
   if(psmw_method == "matching") {
@@ -218,11 +218,9 @@ names(results.df) <- c("prop_treat", "pop_ATE", "pop_ATT",
                        "avg_smd_baseline", "avg_varratio_baseline", 
                         "avg_smd_ps", "avg_varratio_ps", 
                         "avg_smd_reduction", "avg_varratio_reduction", 
-                        "att_est")
+                        "att_est") 
 head(results.df)
-
-
-write.csv(results.df, "results_list_10_25_2021.csv", row.names = F)
+#write.csv(results.df, "results_list_11_1_2021.csv", row.names = F)
 # ----------------------------------------------------------------------------------------------------------------- #  
 
 
@@ -245,11 +243,20 @@ colnames(results)[(ncol(design_matrix)+1):ncol(results)] <- c("prop_treat", "pop
                                                               "att_est") 
 # results across all iterations 
 head(results)
+table(results$psmw_method)
 
 # aggregated results (across unique simulation cells)
-ag_results <- aggregate(. ~ sample_size + treatment_effect + treatment_prevalence + n_covs + smd_covs + smd_y + 
-                          r_square + variance_ratio + knn + psmw_method,
+ag_results <- aggregate(. ~ sample_size + treatment_effect + treatment_prevalence + n_covs + 
+                          smd_covs + smd_y + r_square + variance_ratio + knn + psmw_method,
                         data = results[,-1], FUN = mean)
+
+ag_results$treatment_prevalence <- as.factor(ag_results$treatment_prevalence)
+ag_results$psmw_method <- as.factor(ag_results$psmw_method)
+ag_results$method <- as.factor(ifelse(ag_results$knn == 1, "psm_1", 
+                                      ifelse(ag_results$knn == 3, "psm_3", 
+                                             ifelse(ag_results$knn == 5, "psm_5", "weighting"))))
+ag_results$bias_att <- ((ag_results$att_est - ag_results$pop_ATT) / ag_results$pop_ATT)*100
+
 head(ag_results)
 # ----------------------------------------------------------------------------------------------------------------- #  
 
@@ -257,31 +264,33 @@ head(ag_results)
 
 
 # ----------------------------------------------------------------------------------------------------------------- #  
-# Plot balance 
+# Plot balance with respect to standardized mean differences 
 # ----------------------------------------------------------------------------------------------------------------- #  
-label_method <- c("1:1 Matching with Replacement",
-                  "3:1 Matching with Replacement",
-                  "5:1 Matching with Replacement",
-                  "ATT Weighting")
+label_method <- c("1:1 matching with replacement",
+                  "3:1 matching with replacement",
+                  "5:1 matching with replacement",
+                  "ATT weighting")
 
-breaks_method <- c("match_wr1",
-                   "match_wr3",
-                   "match_wr5",
-                   "weight")
+breaks_method <- c("psm_1",
+                   "psm_3",
+                   "psm_5",
+                   "weighting")
 
-label_smd_covs <- c("0.1" = "Covariate Imbalance SMD = 0.1",
-                    "0.2" = "Covariate Imbalance SMD = 0.2",
-                    "0.3" = "Covariate Imbalance SMD = 0.3",
-                    "0.5" = "Covariate Imbalance SMD = 0.5")
+label_smd_covs <- c("0.1" = "Covariate imbalance SMD = 0.1",
+                    "0.2" = "Covariate imbalance SMD = 0.2",
+                    "0.3" = "Covariate imbalance SMD = 0.3",
+                    "0.5" = "Covariate imbalance SMD = 0.5")
 
 
-plot <- ggplot(data = ag_results, aes(y = (smd_reduction)*100, 
-                                      x = as.factor(treatment_prevalence), 
-                                      group = as.factor(method))) +
-  geom_line(aes(linetype=as.factor(method), color=as.factor(method))) +
-  facet_wrap(~ smd_covs, labeller = labeller(.multi_line = T, smd_covs = label_smd_covs)) +
-  geom_point(aes(shape=as.factor(method), color=as.factor(method)), size=2) +
-  theme_bw() +
+plot <- ggplot(data = ag_results, aes(y = avg_smd_reduction, 
+                                      x = treatment_prevalence, 
+                                      group = method)) +  
+  geom_line(aes(linetype = method, 
+                color = method)) +  
+  geom_point(aes(shape = method, 
+                 color = method), size = 2) + 
+  facet_wrap(~ smd_covs, 
+             labeller = labeller(.multi_line = T, smd_covs = label_smd_covs)) + 
   labs(x = "Treatment Prevalence") +
   labs(y = "Percentage Reduction in Covariate Imbalance") + 
   scale_colour_discrete(name = "Propensity Score Method",
@@ -289,6 +298,37 @@ plot <- ggplot(data = ag_results, aes(y = (smd_reduction)*100,
   scale_shape_discrete(name = "Propensity Score Method",
                        breaks = breaks_method, labels = label_method) + 
   scale_linetype_discrete(name = "Propensity Score Method",
-                          breaks = breaks_method, labels = label_method)
+                          breaks = breaks_method, labels = label_method) + 
+  theme_bw()
+
 plot
+# ----------------------------------------------------------------------------------------------------------------- # 
+
+
+
+
+
 # ----------------------------------------------------------------------------------------------------------------- #  
+# Plot bias in treatment effect estimates
+# ----------------------------------------------------------------------------------------------------------------- #  
+plot <- ggplot(data = ag_results, aes(y = bias_att, 
+                                      x = treatment_prevalence, 
+                                      group = method)) +  
+  geom_line(aes(linetype = method, 
+                color = method)) +  
+  geom_point(aes(shape = method, 
+                 color = method), size = 2) + 
+  facet_wrap(~ smd_covs, 
+             labeller = labeller(.multi_line = T, smd_covs = label_smd_covs)) + 
+  labs(x = "Treatment Prevalence") +
+  labs(y = "Percentage Bias in ATT Estimate") + 
+  scale_colour_discrete(name = "Propensity Score Method",
+                        breaks = breaks_method, labels = label_method) +
+  scale_shape_discrete(name = "Propensity Score Method",
+                       breaks = breaks_method, labels = label_method) + 
+  scale_linetype_discrete(name = "Propensity Score Method",
+                          breaks = breaks_method, labels = label_method) + 
+  theme_bw()
+
+plot
+# ----------------------------------------------------------------------------------------------------------------- # 
