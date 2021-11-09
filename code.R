@@ -299,7 +299,7 @@ label_smd_covs <- c("0.1" = "Covariate Imbalance SMD = 0.1",
                     "0.5" = "Covariate Imbalance SMD = 0.5")
 
 
-plot <- ggplot(data = mygg, aes(y = (smd_reduction)*100, 
+plot <- ggplot(data = ag_results, aes(y = (smd_reduction)*100, 
                                       x = as.factor(treatment_prevalence), 
                                       group = as.factor(method))) +
   geom_line(aes(linetype=as.factor(method), color=as.factor(method))) +
