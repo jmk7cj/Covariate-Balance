@@ -226,19 +226,19 @@ estimate_ps <- function(d, r, psmw_method) {
   
   # average SMD across all covariates at baseline
   avg_smd_baseline <- mean(abs(bal.tab(ps_model, stats = c("mean.diffs", "variance.ratios"), 
-                                       un=T, s.d.denom = "pooled")$Balance[-c(1),"Diff.Un"]))
+                                       un=T, s.d.denom = "treated")$Balance[-c(1),"Diff.Un"]))
   
   # average variance ratio across all covariates at baseline
   avg_varratio_baseline <- mean(abs(bal.tab(ps_model, stats = c("mean.diffs", "variance.ratios"), 
-                                            un=T, s.d.denom = "pooled")$Balance[-c(1),"V.Ratio.Un"]))
+                                            un=T, s.d.denom = "treated")$Balance[-c(1),"V.Ratio.Un"]))
   
   # average SMD across all covariates after PSM/W
   avg_smd_ps <- mean(abs(bal.tab(ps_model, stats = c("mean.diffs", "variance.ratios"), 
-                                 un=T, s.d.denom = "pooled")$Balance[-c(1),"Diff.Adj"]))
+                                 un=T, s.d.denom = "treated")$Balance[-c(1),"Diff.Adj"]))
   
   # average variance ratio across all covariates after PSM/W
   avg_varratio_ps <- mean(abs(bal.tab(ps_model, stats = c("mean.diffs", "variance.ratios"),
-                                      un=T, s.d.denom = "pooled")$Balance[-c(1),"V.Ratio.Adj"]))
+                                      un=T, s.d.denom = "treated")$Balance[-c(1),"V.Ratio.Adj"]))
   
   # average reduction in SMD across all covariates after PSM/W
   avg_smd_reduction <- ((avg_smd_ps - avg_smd_baseline) / avg_smd_baseline)*-100
