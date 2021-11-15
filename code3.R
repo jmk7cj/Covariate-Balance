@@ -11,6 +11,8 @@ library("doParallel")
 library("doSNOW")
 library("tidyverse")
 
+#setwd("D:/myfolder/")
+
 iterations <- 20 
 sample_size <- c(250, 500)
 n_covs <- c(10, 20)
@@ -314,7 +316,6 @@ names(results.df) <- c("prop_treat", "pop_ATE", "pop_ATT",
                        "att_est_unadj", "att_se_unadj",
                        "att_est_linear", "att_se_linear")
 
-#setwd("D:/fall 2021/jree revisions/r code")
 #write.csv(results.df, "results_df_11_12_2021.csv", row.names = F)
 # ----------------------------------------------------------------------------------------------------------------- # 
 # ----------------------------------------------------------------------------------------------------------------- #  
