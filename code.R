@@ -26,6 +26,7 @@ library("ggplot2")
 library("doParallel")
 library("doSNOW")
 library("tidyverse")
+library("ggpubr")
 
 setwd("/Users/joekush/Desktop/myfolder")
 
@@ -513,7 +514,7 @@ p3
 
 # ----------------------------------------------------------------------------------------------------------------- #
 # Combine all plots into single graph
-ggarrange(p1,p2,p3, ncol = 1, nrow=3, common.legend = T, legend = "right")
+ggpubr::ggarrange(p1,p2,p3, ncol = 1, nrow=3, common.legend = T, legend = "right")
 # ----------------------------------------------------------------------------------------------------------------- #
 # END
 # ----------------------------------------------------------------------------------------------------------------- #
